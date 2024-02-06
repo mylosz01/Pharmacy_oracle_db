@@ -10,10 +10,14 @@ create or replace NONEDITIONABLE PACKAGE PAK_EMPLOYEE_MANAGE AS
     
     FUNCTION czy_produkt_na_stanie(id_prod IN INT) RETURN BOOLEAN;
     
+    FUNCTION ilosc_produktu_na_stanie(id_prod IN INT) RETURN NUMBER;
+    
     
     PROCEDURE zamow_lek(id_prod IN INT, ilosc_zam IN NUMBER, id_prac IN INT);
   
     PROCEDURE zaktualizuj_stan_produktu(id_prod IN INT, nowa_ilosc IN NUMBER);
+    
+    PROCEDURE usun_produkt_ze_stanu(id_prod IN INT);
     
     PROCEDURE dodaj_klienta(
         imiee IN VARCHAR2 DEFAULT '-',
@@ -76,6 +80,17 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_EMPLOYEE_MANAGE AS
             RETURN FALSE;
         
     END czy_produkt_na_stanie;
+    
+    
+    
+    FUNCTION ilosc_produktu_na_stanie(id_prod IN INT) RETURN NUMBER IS
+        ilosc_na_stanie NUMBER;
+    BEGIN
+    
+        SELECT iloscnastanie INTO ilosc_na_stanie FROM tab_stanmagazynowy stan WHERE stan.produkt.produktID = id_prod;
+        
+        return ilosc_na_stanie;
+    END;
 
 
     PROCEDURE zamow_lek(id_prod IN INT, ilosc_zam IN NUMBER, id_prac IN INT) AS
@@ -149,7 +164,7 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_EMPLOYEE_MANAGE AS
         --sprawdzanie produktu na stanie
         IF czy_produkt_na_stanie(id_prod) = TRUE THEN
             --produkt na stanie
-            UPDATE tab_stanmagazynowy stan SET iloscNaStanie = nowa_ilosc WHERE stan.produkt.produktID = id_prod;
+            UPDATE tab_stanmagazynowy stan SET iloscNaStanie = iloscNaStanie + nowa_ilosc WHERE stan.produkt.produktID = id_prod;
             
             dbms_output.put_line('Stan produktu o id: ' || id_prod || ' zostal zaktualizowany');
         ELSE
@@ -181,6 +196,12 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_EMPLOYEE_MANAGE AS
             
     END zaktualizuj_stan_produktu;
 
+
+    PROCEDURE usun_produkt_ze_stanu(id_prod IN INT) AS
+    BEGIN
+        DELETE FROM tab_stanmagazynowy WHERE deref(produkt).produktID = id_prod;
+        dbms_output.put_line('Produkt o id: ' || id_prod || ' zostal usuniety ze stanu magazynowego');
+    END usun_produkt_ze_stanu;
 
 
     PROCEDURE dodaj_klienta(
@@ -255,28 +276,42 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_EMPLOYEE_MANAGE AS
     
     
     PROCEDURE wyswietl_leki_z_kategorii(id_kat IN INT) AS
-    kat type_kategorie;
+        kat type_kategorie;
+        TYPE ref_cursor IS REF CURSOR;
+        c_prod ref_cursor;
+        ref_prod ref type_produkty;
+        pr type_produkty;
+        
     BEGIN
     
         IF czy_istnieje_kategoria(id_kat) = FALSE THEN
             RAISE brak_kategorii_except;
         END if;
     
-        SELECT DEREF(prod.kategoria) INTO kat FROM tab_produkty prod WHERE prod.kategoria.kategoriaID = id_kat;
+        SELECT DEREF(prod.kategoria) INTO kat FROM tab_produkty prod WHERE prod.kategoria.kategoriaID = id_kat AND ROWNUM=1;
     
         DBMS_OUTPUT.PUT_LINE('KATEGORIA: ' || kat.nazwaKategorii);
         
-        FOR p_produkt IN (SELECT * FROM tab_produkty prod WHERE prod.kategoria.kategoriaID = id_kat) LOOP
+        OPEN c_prod FOR SELECT ref(prod) FROM tab_produkty prod WHERE prod.kategoria.kategoriaID = id_kat;
+        
+        LOOP
+            FETCH c_prod INTO ref_prod;
+            EXIT WHEN c_prod%NOTFOUND;
+            
+            SELECT deref(ref_prod) INTO pr FROM dual;
+            
             DBMS_OUTPUT.PUT_LINE('');
-            DBMS_OUTPUT.PUT_LINE('ProduktID: ' || p_produkt.produktID);
-            DBMS_OUTPUT.PUT_LINE('Nazwa Produktu: ' || p_produkt.nazwaProduktu);
-            DBMS_OUTPUT.PUT_LINE('Cena Produktu: ' || p_produkt.cenaProduktu);
-            DBMS_OUTPUT.PUT_LINE('Data Produkcji: ' || TO_CHAR(p_produkt.dataProdukcji, 'DD-MM-YYYY'));
-            DBMS_OUTPUT.PUT_LINE('Data Waznosci: ' || TO_CHAR(p_produkt.dataWaznosci, 'DD-MM-YYYY'));
-            DBMS_OUTPUT.PUT_LINE('Dostepnoscć: ' || p_produkt.dostepnosc);
-            DBMS_OUTPUT.PUT_LINE('Opis: ' || p_produkt.opis);
+            DBMS_OUTPUT.PUT_LINE('ProduktID: ' || pr.produktID);
+            DBMS_OUTPUT.PUT_LINE('Nazwa Produktu: ' || pr.nazwaProduktu);
+            DBMS_OUTPUT.PUT_LINE('Cena Produktu: ' || pr.cenaProduktu);
+            DBMS_OUTPUT.PUT_LINE('Data Produkcji: ' || TO_CHAR(pr.dataProdukcji, 'DD-MM-YYYY'));
+            DBMS_OUTPUT.PUT_LINE('Data Waznosci: ' || TO_CHAR(pr.dataWaznosci, 'DD-MM-YYYY'));
+            DBMS_OUTPUT.PUT_LINE('Dostepnoscć: ' || pr.dostepnosc);
+            DBMS_OUTPUT.PUT_LINE('Opis: ' || pr.opis);
         
         END LOOP;
+        
+        CLOSE c_prod;
         
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
@@ -344,18 +379,14 @@ ROLLBACK;
 commit;
 
 BEGIN
-
     pak_employee_manage.zaktualizuj_stan_produktu(2,8);
-    
 END;
 
 -- wyswietl dostepne leki
 SELECT * FROM tab_stanmagazynowy;
 
 BEGIN
-
     pak_employee_manage.wyswietl_dostepne_leki;
-    
 END;
 
 
