@@ -101,14 +101,6 @@ CREATE OR REPLACE TYPE type_SZCZEGOLYRECEPT AS OBJECT (
 );
 
 
--- Tworzenie obiektu magazyn
-CREATE OR REPLACE TYPE type_magazyn AS OBJECT ( 
-	MAGAZYNID INT,
-    PRODUKT REF type_produkty, 
-	ILOSCWMAGAZYNIE NUMBER
-);	
-
-
 -- Tworzenie obiektu stan_magazynowy
 CREATE TYPE type_StanMagazynowy AS OBJECT ( 
     Produkt ref type_produkty, 

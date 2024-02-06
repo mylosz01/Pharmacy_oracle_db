@@ -108,15 +108,6 @@ CREATE TABLE tab_szczegolyRecept OF type_SZCZEGOLYRECEPT(
 
 
 --Tworzenie tabeli dla magazyn
-DROP TABLE tab_Magazyn;
-
-CREATE TABLE tab_Magazyn OF type_magazyn(
-    MAGAZYNID PRIMARY KEY,
-    SCOPE FOR(produkt) IS tab_Produkty
-);
-
-
---Tworzenie tabeli dla magazyn
 DROP TABLE tab_StanMagazynowy;
 
 CREATE TABLE tab_StanMagazynowy OF type_StanMagazynowy(
