@@ -327,6 +327,41 @@ END PAK_EMPLOYEE_MANAGE;
 
 -- PRZYKLADY UZYCIA
 
+-- sprawdzanie czy dana kategoria istnieje
+DECLARE
+    res BOOLEAN := FALSE;
+BEGIN
+    IF pak_employee_manage.czy_istnieje_kategoria(id_kat => 4) THEN
+        dbms_output.put_line('istnieje');
+    ELSE
+        dbms_output.put_line('nie istnieje');
+    END IF;
+END;
+
+
+--sprawdzanie czy dany produkt znajduje sie na stanie
+DECLARE
+    res BOOLEAN := FALSE;
+BEGIN
+    IF pak_employee_manage.czy_produkt_na_stanie(id_prod => 2) THEN
+        dbms_output.put_line('jest');
+    ELSE
+        dbms_output.put_line('nie ma');
+    END IF;
+END;
+
+
+-- sprawdzanie ilosci produktu na stanie
+DECLARE
+    res NUMBer;
+BEGIN
+    res := pak_employee_manage.ilosc_produktu_na_stanie(id_prod => 2);
+    
+    dbms_output.put_line('Ilosc produktu na stanie: ' || res);
+
+END;
+
+
 -- zamawianie lekarstwa
 
 SELECT * FROM tab_zamowienia;
@@ -340,9 +375,22 @@ END;
 rollback;
 commit;
 
--- wyswietlenie wszystkich lekow
+
+--zaktualizuj leki na stanie magazynowym
+SELECT * FROM tab_stanmagazynowy;
+SELECT * FROM tab_produkty;
+
+ROLLBACK;
+commit;
+
 BEGIN
-    pak_employee_manage.wyswietl_wszystkie_leki;
+    pak_employee_manage.zaktualizuj_stan_produktu(2,8);
+END;
+
+
+-- usuwanie produktu ze stanu apteki
+BEGIN
+    pak_employee_manage.usun_produkt_ze_stanu(id_prod => 2);
 END;
 
 
@@ -363,24 +411,11 @@ BEGIN
 END;
 
 
--- wyswietlanie lekarstw z danej kategorii
-SELECT * FROM tab_kategorie;
-
-BEGIN 
-    pak_employee_manage.wyswietl_leki_z_kategorii(3);
-END;
-
-
---zaktualizuj leki na stanie magazynowym
-SELECT * FROM tab_stanmagazynowy;
-SELECT * FROM tab_produkty;
-
-ROLLBACK;
-commit;
-
+-- wyswietlenie wszystkich lekow
 BEGIN
-    pak_employee_manage.zaktualizuj_stan_produktu(2,8);
+    pak_employee_manage.wyswietl_wszystkie_leki;
 END;
+
 
 -- wyswietl dostepne leki
 SELECT * FROM tab_stanmagazynowy;
@@ -388,6 +423,16 @@ SELECT * FROM tab_stanmagazynowy;
 BEGIN
     pak_employee_manage.wyswietl_dostepne_leki;
 END;
+
+
+-- wyswietlanie lekarstw z danej kategorii
+SELECT * FROM tab_kategorie;
+
+BEGIN 
+    pak_employee_manage.wyswietl_leki_z_kategorii(4);
+END;
+
+
 
 
 
