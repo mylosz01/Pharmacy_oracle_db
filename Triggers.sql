@@ -19,3 +19,16 @@ BEGIN
         dbms_output.put_line('Mala ilosc produktu : ' || ref_produkt.produktID || ' ' || ref_produkt.nazwaProduktu);
     END IF;
 END;
+
+
+-- trigger ustawiajacy status zrealizowany gdy wydano nalezne leki
+CREATE OR REPLACE TRIGGER TRIG_REALIZACJA_RECEPT 
+BEFORE UPDATE ON TAB_SZCZEGOLYRECEPT 
+FOR EACH ROW
+BEGIN
+    IF :NEW.ilosc_wydana = :NEW.ilosc_do_wydania THEN
+        :NEW.status := 'Zrealizowany';
+    ELSE
+        :NEW.status := 'W trakcie';
+    END IF;
+END;
