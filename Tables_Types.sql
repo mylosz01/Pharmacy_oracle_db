@@ -73,7 +73,6 @@ DROP TABLE tab_Recepty;
 CREATE TABLE tab_Recepty OF type_recepty(
 	RECEPTAID PRIMARY KEY,
     SCOPE FOR(lekarz) IS tab_lekarze,
-    SCOPE FOR(Produkt) IS tab_Produkty,
 	SCOPE FOR(klient) IS tab_klienci
 );
 
@@ -95,7 +94,6 @@ DROP TABLE tab_Recepty;
 CREATE TABLE tab_Recepty OF type_recepty(
     receptaID PRIMARY KEY,
     SCOPE FOR(lekarz) IS tab_Lekarze,
-    SCOPE FOR(produkt) IS tab_Produkty,
 	SCOPE FOR(klient) IS tab_Klienci
 );
 

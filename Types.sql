@@ -78,8 +78,7 @@ CREATE OR REPLACE TYPE type_recepty AS OBJECT (
     DATAWYSTAWIENIA DATE, 
     DATAWAZNOSCI DATE, 
     KODDOSTEPU NUMBER(6), 
-    LEKARZ REF type_Lekarze, 
-    PRODUKT ref type_Produkty, 
+    LEKARZ REF type_Lekarze,
     Klient ref type_Klienci
 );
 
@@ -97,8 +96,8 @@ CREATE OR REPLACE TYPE type_SZCZEGOLYRECEPT AS OBJECT (
     RECEPTA REF type_Recepty, 
     PRODUKT REF type_Produkty,
     STATUS VARCHAR2(40), 
-    ILOSCDOWYDANIA NUMBER, 
-    ILOSCWYDANA NUMBER 
+    ILOSC_WYDANA NUMBER(10,2), 
+    ILOSC_do_WYDANIA NUMBER(10,2) 
 );
 
 
