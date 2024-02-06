@@ -238,3 +238,64 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_ADMIN_MANAGE_STORE AS
 END PAK_ADMIN_MANAGE_STORE;
 
 
+-- PRZYKLADOWE UZYCIA
+-- sprawdzenie czy produkt istnieje
+DECLARE
+    res BOOLEAN := FALSE;
+BEGIN
+    IF pak_admin_manage_store.czy_produkt_istnieje(id_prod => 2) THEN
+        dbms_output.put_line('istnieje');
+    ELSE
+        dbms_output.put_line('nie istnieje');
+    END IF;
+END;
+
+-- sprawdzenie czy produkt znajduje sie w danym magazynie
+DECLARE
+    res BOOLEAN := FALSE;
+BEGIN
+    IF pak_admin_manage_store.czy_produkt_w_magazynie(id_prod => 2, id_mag => 1) THEN
+        dbms_output.put_line('jest');
+    ELSE
+        dbms_output.put_line('nie ma');
+    END IF;
+END;
+
+
+-- dodawanie produktu
+SELECT * From tab_produkty;
+commit;
+
+rollback;
+
+BEGIN
+    pak_admin_manage_store.dodaj_produkt
+        (nazwa_produktu => 'Cholinex',
+        cena_prod => to_number('17,99'),
+        data_prod => TO_DATE('01-01-2024','DD-MM-YYYY'),
+        data_waz => TO_DATE('12-07-2026','DD-MM-YYYY'),
+        dostep => 'duzy',
+        opis => 'Na bol gardla',
+        id_kategorii => 1);
+END;
+
+-- usuniecie produktu
+BEGIN
+    pak_admin_manage_store.usun_produkt(id_produktu => 10);
+END;
+
+--wyswietlenie produktow z magazynu
+BEGIN
+    pak_admin_manage_store.wyswietl_produkty_z_magazynu(id_magazynu=> 1);
+END;
+
+-- aktualizacja stanu w magazynie
+BEGIN
+    pak_admin_manage_store.zaktualizuj_stan_produktu_w_magazynie(id_magazynu => 1, id_prod => 4,ilosc_dodania => 40);
+END;
+
+-- usuwanie produktu z magazynu
+BEGIN
+    pak_admin_manage_store.usun_produkt_z_magazynu(id_magazynu => 1, id_produktu => 4);
+END;
+
