@@ -63,21 +63,21 @@ PACKAGE PAK_CLIENT_MANAGE AS
   PROCEDURE zakup_lekarstwo(id_prod IN INT);
   
   PROCEDURE wyswietl_wszystkie_leki AS
-    
-        SELECT DEREF(prod.kategoria) INTO kat FROM tab_produkty prod WHERE prod.kategoria.kategoriaID = id_kat;
+    Begin
+    FOR lek IN (SELECT * FROM tab_Produkty) LOOP
+        DBMS_OUTPUT.PUT_LINE('Produkt ID: ' || lek.produktID);
+        DBMS_OUTPUT.PUT_LINE('Nazwa Produktu: ' || lek.nazwaProduktu);
+        DBMS_OUTPUT.PUT_LINE('Cena Produktu: ' || lek.cenaProduktu);
+        DBMS_OUTPUT.PUT_LINE('Data Produkcji: ' || TO_CHAR(lek.dataProdukcji, 'YYYY-MM-DD'));
+        DBMS_OUTPUT.PUT_LINE('Data Ważności: ' || TO_CHAR(lek.dataWaznosci, 'YYYY-MM-DD'));
+        DBMS_OUTPUT.PUT_LINE('Dostępność: ' || lek.dostepnosc);
+        DBMS_OUTPUT.PUT_LINE('Opis: ' || lek.opis);
+        IF lek.kategoria IS NOT NULL THEN
+            DBMS_OUTPUT.PUT_LINE('Kategoria: ' || lek.kategoria.nazwaKategorii);
+        END IF;
+    END LOOP;
+END;
 
-        FOR p_produkt IN (SELECT * FROM tab_produkty prod WHERE prod.kategoria.kategoriaID = id_kat) LOOP
-           DBMS_OUTPUT.PUT_LINE('KATEGORIA: ' || kat.nazwaKategorii);
-            DBMS_OUTPUT.PUT_LINE('ProduktID: ' || p_produkt.produktID);
-            DBMS_OUTPUT.PUT_LINE('Nazwa Produktu: ' || p_produkt.nazwaProduktu);
-            DBMS_OUTPUT.PUT_LINE('Cena Produktu: ' || p_produkt.cenaProduktu);
-            DBMS_OUTPUT.PUT_LINE('Data Produkcji: ' || TO_CHAR(p_produkt.dataProdukcji, 'DD-MM-YYYY'));
-            DBMS_OUTPUT.PUT_LINE('Data Waznosci: ' || TO_CHAR(p_produkt.dataWaznosci, 'DD-MM-YYYY'));
-            DBMS_OUTPUT.PUT_LINE('Dostepnoscć: ' || p_produkt.dostepnosc);
-            DBMS_OUTPUT.PUT_LINE('Opis: ' || p_produkt.opis);
-        
-        END LOOP;
-    END wyswietl_wszystkie_leki;
     
   PROCEDURE wyswietl_leki_z_kategorii(id_kat IN INT) AS
     kat type_kategorie;
