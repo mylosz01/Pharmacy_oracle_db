@@ -264,10 +264,7 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_EMPLOYEE_MANAGE AS
         FOR p_produkt IN (SELECT * FROM tab_stanmagazynowy prod) LOOP
             SELECT DEREF(p_produkt.produkt) INTO ref_prod FROM dual;
             DBMS_OUTPUT.PUT_LINE('');
-            DBMS_OUTPUT.PUT_LINE('ProduktID: ' || ref_prod.produktID);
-            DBMS_OUTPUT.PUT_LINE('Nazwa Produktu: ' || ref_prod.nazwaProduktu);
-            DBMS_OUTPUT.PUT_LINE('Cena Produktu: ' || ref_prod.cenaProduktu);
-            DBMS_OUTPUT.PUT_LINE('Dostepnosc: ' || ref_prod.dostepnosc);
+            ref_prod.wyswietl_;
             DBMS_OUTPUT.PUT_LINE('ILOSC NA STANIE: ' || p_produkt.iloscnastanie);
         
         END LOOP;
@@ -301,13 +298,7 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_EMPLOYEE_MANAGE AS
             SELECT deref(ref_prod) INTO pr FROM dual;
             
             DBMS_OUTPUT.PUT_LINE('');
-            DBMS_OUTPUT.PUT_LINE('ProduktID: ' || pr.produktID);
-            DBMS_OUTPUT.PUT_LINE('Nazwa Produktu: ' || pr.nazwaProduktu);
-            DBMS_OUTPUT.PUT_LINE('Cena Produktu: ' || pr.cenaProduktu);
-            DBMS_OUTPUT.PUT_LINE('Data Produkcji: ' || TO_CHAR(pr.dataProdukcji, 'DD-MM-YYYY'));
-            DBMS_OUTPUT.PUT_LINE('Data Waznosci: ' || TO_CHAR(pr.dataWaznosci, 'DD-MM-YYYY'));
-            DBMS_OUTPUT.PUT_LINE('Dostepnoscć: ' || pr.dostepnosc);
-            DBMS_OUTPUT.PUT_LINE('Opis: ' || pr.opis);
+            pr.wyswietl_;
         
         END LOOP;
         

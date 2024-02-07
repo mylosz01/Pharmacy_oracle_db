@@ -45,9 +45,32 @@ CREATE OR REPLACE TYPE type_produkty AS OBJECT (
     dataWaznosci DATE, 
     dostepnosc VARCHAR2(40), 
     opis VARCHAR2(500),
-    kategoria ref type_kategorie
+    kategoria ref type_kategorie,
+	
+	MEMBER PROCEDURE wyswietl_,
+    MEMBER PROCEDURE zmien_cene(nowa_cena NUMBER)
 );
 	
+create or replace NONEDITIONABLE TYPE BODY TYPE_PRODUKTY AS
+    MEMBER PROCEDURE wyswietl_ IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('ProduktID: ' || self.produktID);
+        DBMS_OUTPUT.PUT_LINE('Nazwa Produktu: ' || self.nazwaProduktu);
+        DBMS_OUTPUT.PUT_LINE('Cena Produktu: ' || self.cenaProduktu);
+        DBMS_OUTPUT.PUT_LINE('Data Produkcji: ' || TO_CHAR(self.dataProdukcji, 'DD-MM-YYYY'));
+        DBMS_OUTPUT.PUT_LINE('Data Waznosci: ' || TO_CHAR(self.dataWaznosci, 'DD-MM-YYYY'));
+        DBMS_OUTPUT.PUT_LINE('Dostepnoscć: ' || self.dostepnosc);
+        DBMS_OUTPUT.PUT_LINE('Opis: ' || self.opis);
+    
+    END;
+    
+    MEMBER PROCEDURE zmien_cene(nowa_cena NUMBER) IS
+    BEGIN 
+        SELF.cenaProduktu :=nowa_cena;
+    END;
+    
+END;
+
 -- Tworzenie obiektu platnosci
 CREATE OR REPLACE TYPE type_platnosci AS OBJECT ( 
     platnoscID INT,

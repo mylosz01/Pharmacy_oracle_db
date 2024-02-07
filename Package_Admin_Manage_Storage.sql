@@ -98,7 +98,7 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_ADMIN_MANAGE_STORE AS
                 VALUES (
             SEQ_PRODUKTY.NEXTVAL,
             nazwa_produktu,
-            cena_prod,
+            TO_number(cena_prod),
             data_prod,
             data_waz,
             dostep,
@@ -145,7 +145,7 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_ADMIN_MANAGE_STORE AS
 
     BEGIN
 
-        OPEN c_zawartosc FOR SELECT * FROM tab_magazyny WHERE magazynId = id_magazynu;
+        OPEN c_zawartosc FOR SELECT * FROM tab_magazyny WHERE magazynID = id_magazynu;
         
         LOOP
             FETCH c_zawartosc INTO id_mag, krajj, miastoo, ulica, nr_bud, content_mag;
@@ -166,14 +166,7 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_ADMIN_MANAGE_STORE AS
                 EXIT WHEN c_prod%NOTFOUND;
                 
                 dbms_output.put_line('');
-                DBMS_OUTPUT.PUT_LINE('ProduktID: ' || produkt_w_mag.produktID);
-                DBMS_OUTPUT.PUT_LINE('Nazwa Produktu: ' || produkt_w_mag.nazwaProduktu);
-                DBMS_OUTPUT.PUT_LINE('Cena Produktu: ' || produkt_w_mag.cenaProduktu);
-                DBMS_OUTPUT.PUT_LINE('Data Produkcji: ' || TO_CHAR(produkt_w_mag.dataProdukcji, 'DD-MM-YYYY'));
-                DBMS_OUTPUT.PUT_LINE('Data Waznosci: ' || TO_CHAR(produkt_w_mag.dataWaznosci, 'DD-MM-YYYY'));
-                DBMS_OUTPUT.PUT_LINE('Dostepnoscć: ' || produkt_w_mag.dostepnosc);
-                DBMS_OUTPUT.PUT_LINE('Opis: ' || produkt_w_mag.opis);
-                DBMS_OUTPUT.PUT_LINE('Ilosc w magazynie: ' || ilosc_w_mag);
+                produkt_w_mag.wyswietl_;
             
             END LOOP;
             
@@ -202,7 +195,7 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_ADMIN_MANAGE_STORE AS
         --sprawdzanie produktu na stanie
         IF czy_produkt_w_magazynie(id_prod, id_magazynu) = TRUE THEN
             --produkt na stanie
-            UPDATE TABLE(SELECT mag.produkty_w_magazynie FROM tab_magazyny mag WHERE mag.magazynID = 1) pr 
+            UPDATE TABLE(SELECT mag.produkty_w_magazynie FROM tab_magazyny mag WHERE mag.magazynID = id_magazynu) pr 
                 SET pr.ilosc_w_magazynie = pr.ilosc_w_magazynie + ilosc_dodania
                 WHERE pr.produkt.produktID = id_prod;
             dbms_output.put_line('Stan produktu o id: ' || id_prod || ' zostal zaktualizowany');
@@ -213,7 +206,7 @@ create or replace NONEDITIONABLE PACKAGE BODY PAK_ADMIN_MANAGE_STORE AS
             
             SELECT REF(prod) INTO ref_produkt FROM tab_produkty prod WHERE prod.produktID = id_prod;
             
-            INSERT INTO TABLE(SELECT produkty_w_magazynie FROM tab_magazyny WHERE magazynId = 1) VALUES(ref_produkt,ilosc_dodania);
+            INSERT INTO TABLE(SELECT produkty_w_magazynie FROM tab_magazyny WHERE magazynId = id_magazynu) VALUES(ref_produkt,ilosc_dodania);
             
             dbms_output.put_line('Produkt o id: ' || id_prod || ' zostal dodany do magazynu ' || ilosc_dodania || ' w ilosc: ' || ilosc_dodania );
             
