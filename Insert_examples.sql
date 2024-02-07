@@ -8,51 +8,85 @@ BEGIN
 	INSERT INTO tab_Kategorie VALUES (SEQ_KATEGORIE.NEXTVAL, 'Preparaty dla dzieci');
 
 END;
+SELECT * FROM taB_kategorie;
 
--- wprowadzanie danych do platnosci
+-- Dodawanie klientow
 BEGIN
-    INSERT INTO tab_Platnosci VALUES (1, 'Karta');
-    INSERT INTO tab_Platnosci VALUES (2, 'Gotowka');
+    pak_employee_manage.dodaj_klienta(
+        imiee => 'Marianna',
+        nazwiskoo => 'Kowalska',
+        pesell => '98265473829',
+        data_urodz => TO_DATE('02-04-2000','dd-mm-yyyy'),
+        wiekk => 23,
+        nr_tel => '455345834',
+        emaill => 'mar.kow@wp.pl'
+    );
 
 END;
 
--- Dodawanie obiektu produkt
-create or replace PROCEDURE dodaj_produkt
-(nazwa_produktu IN VARCHAR2 default '-',
-cena_prod IN NUMBER default 1.1,
-data_prod IN DATE default TO_DATE('15-01-2024','DD-MM-YY'),
-data_waz IN DATE default TO_DATE('15-01-2024','DD-MM-YY'),
-dostep IN VARCHAR2 default 'malo',
-opis IN VARCHAR2 default '-',
-id_kategorii IN INT default 1) IS
-    ref_kategoria ref type_kategorie;
 BEGIN
-
-    SELECT ref(kat) INTO ref_kategoria
-    FROM tab_Kategorie kat
-    WHERE kat.kategoriaID = id_kategorii;
-
-    INSERT INTO tab_Produkty(produktID,
-        nazwaProduktu,
-        cenaProduktu,
-        dataProdukcji,
-        dataWaznosci,
-        dostepnosc,
-        opis,
-        kategoria) 
-        VALUES (
-    SEQ_PRODUKTY.NEXTVAL,
-    nazwa_produktu,
-    cena_prod,
-    data_prod,
-    data_waz,
-    dostep,
-    opis,
-    ref_kategoria);
-    
-    dbms_output.put_line('Produkt: ' || nazwa_produktu || ' zostal dodany');
+    pak_employee_manage.dodaj_klienta(
+        imiee => 'Jan',
+        nazwiskoo => 'Nowak',
+        pesell => '12345678901',
+        data_urodz => TO_DATE('01-01-1990','dd-mm-yyyy'),
+        wiekk => 32,
+        nr_tel => '123456789',
+        emaill => 'jan.nowak@example.com'
+    );
 END;
 
+BEGIN
+    pak_employee_manage.dodaj_klienta(
+        imiee => 'Anna',
+        nazwiskoo => 'Kowalska',
+        pesell => '98765432109',
+        data_urodz => TO_DATE('15-06-1985','dd-mm-yyyy'),
+        wiekk => 37,
+        nr_tel => '987654321',
+        emaill => 'anna.kowalska@example.com'
+    );
+END;
+
+BEGIN
+    pak_employee_manage.dodaj_klienta(
+        imiee => 'Michał',
+        nazwiskoo => 'Lis',
+        pesell => '76543210987',
+        data_urodz => TO_DATE('20-03-1995','dd-mm-yyyy'),
+        wiekk => 27,
+        nr_tel => '765432109',
+        emaill => 'michal.lis@example.com'
+    );
+END;
+
+SELECT * FROM tab_klienci;
+
+-- Wprowadzanie lekarzy
+-- Dodanie przykładowych lekarzy
+INSERT INTO tab_lekarze (lekarzID, imie, nazwisko, nrTelefonu)
+VALUES (SEQ_lekarze.nextval, 'Jan', 'Kowalski', '123456789');
+
+INSERT INTO tab_lekarze (lekarzID, imie, nazwisko, nrTelefonu)
+VALUES (SEQ_lekarze.nextval, 'Anna', 'Nowak', '987654321');
+
+INSERT INTO tab_lekarze (lekarzID, imie, nazwisko, nrTelefonu)
+VALUES (SEQ_lekarze.nextval, 'Marek', 'Lis', '555555555');
+
+-- Dodanie kolejnych przykładowych lekarzy
+INSERT INTO tab_lekarze (lekarzID, imie, nazwisko, nrTelefonu)
+VALUES (SEQ_lekarze.nextval, 'Alicja', 'Kaczor', '111222333');
+
+INSERT INTO tab_lekarze (lekarzID, imie, nazwisko, nrTelefonu)
+VALUES (SEQ_lekarze.nextval, 'Piotr', 'Wójcik', '444777888');
+
+INSERT INTO tab_lekarze (lekarzID, imie, nazwisko, nrTelefonu)
+VALUES (SEQ_lekarze.nextval, 'Magdalena', 'Nowakowska', '666999000');
+
+SELECT * FROM tab_lekarze;
+
+
+-- wprowadzanie produktow
 BEGIN
     PAK_ADMIN_MANAGE_STORE.dodaj_produkt(
         nazwa_produktu => 'Calpol',
@@ -150,40 +184,90 @@ BEGIN
 END;
 
 SELECT * FROM tab_produkty;
-	
-	
--- Dodawanie obiektu Pracownik
-create or replace PROCEDURE dodaj_pracownika
-(imiee IN VARCHAR2 default '-',
-nazwiskoo IN VARCHAR2 default '-',
-data_urodz IN DATE default TO_DATE('15-01-2024','DD-MM-YY'),
-wiekk IN INT default 1,
-nr_tel IN VARCHAR2 default '000000000',
-pensjaa IN NUMBER default 1000,
-premiaa IN NUMBER default 0) IS
+
+
+-- dodawanie przykladowych magazynow wraz z produktami
 BEGIN
 
-    INSERT INTO tab_Pracownicy(pracownikID,
-        imie,
-        nazwisko,
-        dataUrodzenia,
-        wiek,
-        nrTelefonu,
-        pensja,
-        premia) 
-        VALUES (
-    SEQ_PRACOWNICY.NEXTVAL,
-    imiee,
-    nazwiskoo,
-    data_urodz,
-    wiekk,
-    nr_tel,
-    pensjaa,
-    premiaa);
-    
-    dbms_output.put_line('Pracownik: ' || imiee || ' ' || nazwiskoo || ' zostal dodany');
+    INSERT INTO tab_Magazyny (
+        magazynID, 
+        kraj, 
+        miasto, 
+        nazwaUlicy, 
+        nrBudynku, 
+        produkty_w_magazynie
+    ) VALUES (
+        seq_magazyny.nextval, 
+        'Polska', 
+        'Warszawa', 
+        'ul. Prosta', 
+        10, 
+        type_zawartosc_magazynu(
+            type_produkt_w_magazynie(
+                (SELECT REF(p) FROM tab_produkty p WHERE produktID = 1), 
+                100
+            ),
+            type_produkt_w_magazynie(
+                (SELECT REF(p) FROM tab_produkty p WHERE produktID = 2), 
+                45
+            ),
+            type_produkt_w_magazynie(
+                (SELECT REF(p) FROM tab_produkty p WHERE produktID = 5), 
+                30
+            ),
+            type_produkt_w_magazynie(
+                (SELECT REF(p) FROM tab_produkty p WHERE produktID = 7), 
+                120
+            )
+        )
+    );
+
+    INSERT INTO tab_Magazyny (
+        magazynID, 
+        kraj, 
+        miasto, 
+        nazwaUlicy, 
+        nrBudynku, 
+        produkty_w_magazynie
+    ) VALUES (
+        seq_magazyny.nextval, 
+        'Polska', 
+        'Kraków', 
+        'ul. Krakowska', 
+        20, 
+        type_zawartosc_magazynu(
+            type_produkt_w_magazynie(
+                (SELECT REF(p) FROM tab_produkty p WHERE produktID = 2), 
+                50
+            ),
+            type_produkt_w_magazynie(
+                (SELECT REF(p) FROM tab_produkty p WHERE produktID = 3), 
+                75
+            ),
+            type_produkt_w_magazynie(
+                (SELECT REF(p) FROM tab_produkty p WHERE produktID = 6), 
+                20
+            ),
+            type_produkt_w_magazynie(
+                (SELECT REF(p) FROM tab_produkty p WHERE produktID = 5), 
+                64
+            )
+        )
+    );
+
+
 END;
 
+
+-- wprowadzanie danych do platnosci
+BEGIN
+    INSERT INTO tab_Platnosci VALUES (1, 'Karta');
+    INSERT INTO tab_Platnosci VALUES (2, 'Gotowka');
+
+END;
+
+
+-- wprowadzanie pracownikow
 BEGIN
     PAK_ADMIN_MANAGE_EMPLOYEE.dodaj_pracownika(
         imiee => 'Kamil',
@@ -257,6 +341,29 @@ BEGIN
 
 END;
 
+-- wprowdzanie recept
+-- Przykładowe recepty
+INSERT INTO tab_recepty (receptaID, dataWystawienia, dataWaznosci, kodDostepu, lekarz, klient)
+VALUES (SEQ_recepty.nextval, TO_DATE('01-01-2022', 'DD-MM-YYYY'), TO_DATE('01-02-2027', 'DD-MM-YYYY'), 123456, (SELECT REF(l) FROM tab_lekarze l WHERE lekarzID = 1), (SELECT REF(k) FROM tab_klienci k WHERE klientID = 1));
+
+INSERT INTO tab_recepty (receptaID, dataWystawienia, dataWaznosci, kodDostepu, lekarz, klient)
+VALUES (SEQ_recepty.nextval, TO_DATE('05-03-2022', 'DD-MM-YYYY'), TO_DATE('05-04-2023', 'DD-MM-YYYY'), 654321, (SELECT REF(l) FROM tab_lekarze l WHERE lekarzID = 2), (SELECT REF(k) FROM tab_klienci k WHERE klientID = 2));
+
+-- Dodanie kolejnych przykładowych recept
+INSERT INTO tab_recepty (receptaID, dataWystawienia, dataWaznosci, kodDostepu, lekarz, klient)
+VALUES (SEQ_recepty.nextval, TO_DATE('10-05-2022', 'DD-MM-YYYY'), TO_DATE('10-06-2024', 'DD-MM-YYYY'), 987654, (SELECT REF(l) FROM tab_lekarze l WHERE lekarzID = 3), (SELECT REF(k) FROM tab_klienci k WHERE klientID = 1));
+
+INSERT INTO tab_recepty (receptaID, dataWystawienia, dataWaznosci, kodDostepu, lekarz, klient)
+VALUES (SEQ_recepty.nextval, TO_DATE('15-08-2022', 'DD-MM-YYYY'), TO_DATE('15-09-2026', 'DD-MM-YYYY'), 789012, (SELECT REF(l) FROM tab_lekarze l WHERE lekarzID = 1), (SELECT REF(k) FROM tab_klienci k WHERE klientID = 2));
+
+INSERT INTO tab_recepty (receptaID, dataWystawienia, dataWaznosci, kodDostepu, lekarz, klient)
+VALUES (SEQ_recepty.nextval, TO_DATE('20-11-2022', 'DD-MM-YYYY'), TO_DATE('20-12-2025', 'DD-MM-YYYY'), 345678, (SELECT REF(l) FROM tab_lekarze l WHERE lekarzID = 2), (SELECT REF(k) FROM tab_klienci k WHERE klientID = 3));
+
+SELECT * FROM tab_recepty;
+
+
+
+
 
 -- Dodawanie obiektu Zamowienia
 create or replace PROCEDURE dodaj_zamowienie
@@ -302,122 +409,76 @@ BEGIN
 
 END;
     
-
+-- wprowadzanie do stanu magazynowego
 BEGIN
-    PAK_EMPLOYEE_TRANSACTION.dodaj_zamowienie(
-        iloscc => TO_NUMBER(5),
-        statuss => 'W trakcie',
-        data_zam => TO_DATE('20-02-2024', 'DD-MM-YYYY'),
-        id_produktu => 3,
-        id_pracownika => 1
-    );
-    
-    PAK_EMPLOYEE_TRANSACTION.dodaj_zamowienie(
-        iloscc => TO_NUMBER(5),
-        statuss => 'W trakcie',
-        data_zam => TO_DATE('20-02-2024', 'DD-MM-YYYY'),
-        id_produktu => 3,
-        id_pracownika => 1
-    );
-
-    PAK_EMPLOYEE_TRANSACTION.dodaj_zamowienie(
-        iloscc => TO_NUMBER(3),
-        statuss => 'Oczekujace',
-        data_zam => TO_DATE('25-02-2024', 'DD-MM-YYYY'),
-        id_produktu => 1,
-        id_pracownika => 2
-    );
-
-    PAK_EMPLOYEE_TRANSACTION.dodaj_zamowienie(
-        iloscc => TO_NUMBER(2),
-        statuss => 'Zrealizowane',
-        data_zam => TO_DATE('28-02-2024', 'DD-MM-YYYY'),
-        id_produktu => 2,
-        id_pracownika => 3
-    );
-
-    PAK_EMPLOYEE_TRANSACTION.dodaj_zamowienie(
-        iloscc => TO_NUMBER(7),
-        statuss => 'Oczekujace',
-        data_zam => TO_DATE('10-03-2024', 'DD-MM-YYYY'),
-        id_produktu => 4,
-        id_pracownika => 4
-    );
-
-    PAK_EMPLOYEE_TRANSACTION.dodaj_zamowienie(
-        iloscc => TO_NUMBER(4),
-        statuss => 'W trakcie',
-        data_zam => TO_DATE('15-03-2024', 'DD-MM-YYYY'),
-        id_produktu => 5,
-        id_pracownika => 5
-    );
-
-    PAK_EMPLOYEE_TRANSACTION.dodaj_zamowienie(
-        iloscc => TO_NUMBER(10),
-        statuss => 'Zrealizowane',
-        data_zam => TO_DATE('20-03-2024', 'DD-MM-YYYY'),
-        id_produktu => 6,
-        id_pracownika => 6
-    );
-
-END;
-
-BEGIN
-
-    PAK_EMPLOYEE_TRANSACTION.dodaj_zamowienie(
-        iloscc => TO_NUMBER(4),
-        statuss => 'Oczekujace',
-        data_zam => TO_DATE('20-03-2024', 'DD-MM-YYYY'),
-        id_produktu => 4,
-        id_pracownika => 1
-    );
-
-END;
-
--- Dodawanie obiektu transakcja
-CREATE OR REPLACE PROCEDURE przeprowadz_TRANSAKCJE(id_prac IN INT, id_plat IN INT) AS
-BEGIN
-    DECLARE
-        aktualna_data DATE;
-        ref_prac REF type_Pracownicy;
-        ref_plat REF type_Platnosci;
-    BEGIN 
-        SELECT sysdate INTO aktualna_data FROM DUAL;
-        
-        SELECT ref(prac) INTO ref_prac
-        FROM tab_Pracownicy prac
-        WHERE prac.pracownikID = id_prac;
-        
-        SELECT ref(plat) INTO ref_plat
-        FROM tab_Platnosci plat
-        WHERE plat.platnoscID = id_plat;
-    
-
-        INSERT INTO tab_Transakcje
-        VALUES (SEQ_TRANSAKCJA.NEXTVAL, 
-        TO_DATE(aktualna_data,'dd-mm-yyyy'),
-        ref_prac,
-        ref_plat);
-        
-        
-        dbms_output.put_line('Transakcja została wykonana');
-    
-    END;
-    
+    pak_employee_manage.zaktualizuj_stan_produktu(id_prod => 1, nowa_ilosc => 19);
+	pak_employee_manage.zaktualizuj_stan_produktu(id_prod => 2, nowa_ilosc => 9);
+	pak_employee_manage.zaktualizuj_stan_produktu(id_prod => 3, nowa_ilosc => 23);
+	pak_employee_manage.zaktualizuj_stan_produktu(id_prod => 4, nowa_ilosc => 25);
+	pak_employee_manage.zaktualizuj_stan_produktu(id_prod => 5, nowa_ilosc => 16);
+	pak_employee_manage.zaktualizuj_stan_produktu(id_prod => 6, nowa_ilosc => 46);
 END;
 
 
+-- wprowadzanie szczegolow recept
+-- Przykładowe referencje do recept, produkt
+
+-- Przykładowe referencje do recept, produkt
+DECLARE
+    ref_recepta ref type_Recepty;
+    ref_produkt ref type_Produkty;
 BEGIN
-    przeprowadz_TRANSAKCJE(id_prac => 3, id_plat => 2);
-    przeprowadz_TRANSAKCJE(id_prac => 4, id_plat => 1);
-    przeprowadz_TRANSAKCJE(id_prac => 5, id_plat => 2);
-    przeprowadz_TRANSAKCJE(id_prac => 3, id_plat => 1);
-    przeprowadz_TRANSAKCJE(id_prac => 2, id_plat => 2);
-    przeprowadz_TRANSAKCJE(id_prac => 6, id_plat => 1);
-    przeprowadz_TRANSAKCJE(id_prac => 1, id_plat => 2);
-    przeprowadz_TRANSAKCJE(id_prac => 3, id_plat => 1);
-    przeprowadz_TRANSAKCJE(id_prac => 2, id_plat => 1);
-    przeprowadz_TRANSAKCJE(id_prac => 4, id_plat => 2);
+    SELECT REF(r) INTO ref_recepta FROM tab_recepty r WHERE receptaID = 1;
+    SELECT REF(p) INTO ref_produkt FROM tab_produkty p WHERE produktID = 1;
+
+    -- Dodanie przykładowego szczegółu recepty
+    INSERT INTO tab_szczegolyrecept (recepta, produkt, status, ilosc_Wydana,ilosc_do_wydania)
+    VALUES (ref_recepta, ref_produkt, 'W trakcie', 2.0, 5.0);
+
+    -- Dodanie kolejnego przykładowego szczegółu recepty
+    SELECT REF(r) INTO ref_recepta FROM tab_recepty r WHERE receptaID = 2;
+    SELECT REF(p) INTO ref_produkt FROM tab_produkty p WHERE produktID = 3;
+
+    INSERT INTO tab_szczegolyrecept (recepta, produkt, status, ilosc_Wydana, ilosc_do_Wydania)
+    VALUES (ref_recepta, ref_produkt, 'Zrealizowano', 5.0, 8.0);
+END;
+/
+
+-- Przykładowe referencje do recept, produkt
+DECLARE
+    ref_recepta ref type_Recepty;
+    ref_produkt ref type_Produkty;
+BEGIN
+    SELECT REF(r) INTO ref_recepta FROM tab_recepty r WHERE receptaID = 3;
+    SELECT REF(p) INTO ref_produkt FROM tab_produkty p WHERE produktID = 2;
+
+    -- Dodanie kolejnego przykładowego szczegółu recepty
+    INSERT INTO tab_szczegolyrecept (recepta, produkt, status, ilosc_Wydana, ilosc_do_Wydania)
+    VALUES (ref_recepta, ref_produkt, 'W trakcie', 3.0, 12.0);
+
+    -- Dodanie jeszcze jednego przykładowego szczegółu recepty
+    SELECT REF(r) INTO ref_recepta FROM tab_recepty r WHERE receptaID = 4;
+    SELECT REF(p) INTO ref_produkt FROM tab_produkty p WHERE produktID = 1;
+
+    INSERT INTO tab_szczegolyrecept (recepta, produkt, status, ilosc_wydana, ilosc_do_Wydania)
+    VALUES (ref_recepta, ref_produkt, 'Zrealizowano', 10.0, 10.0);
+END;
+/
+
+SELECT * FROM tab_szczegolyrecept;
+
+
+--wprowadzanie Zamowienia
+
+BEGIN 
+
+    pak_employee_manage.zamow_lek(id_prod => 1, ilosc_zam => 17, id_prac => 2);
+	pak_employee_manage.zamow_lek(id_prod => 2, ilosc_zam => 15, id_prac => 1);
+	pak_employee_manage.zamow_lek(id_prod => 2, ilosc_zam => 9, id_prac => 3);
+	pak_employee_manage.zamow_lek(id_prod => 3, ilosc_zam => 5, id_prac => 4);
+	pak_employee_manage.zamow_lek(id_prod => 5, ilosc_zam => 12, id_prac => 1);
+	pak_employee_manage.zamow_lek(id_prod => 6, ilosc_zam => 24, id_prac => 2);
+
 END;
 
 
