@@ -8,7 +8,7 @@ PACKAGE PAK_CLIENT_MANAGE AS
 
   FUNCTION czy_produkt_na_stanie(id_prod IN INT) RETURN BOOLEAN;
 
-  PROCEDURE zakup_lekarstwo(id_prod IN INT);
+  PROCEDURE zakup_lekarstwo(id_prod IN INT,id_plat IN INT, ilosc_prod IN NUMBER);
   
   PROCEDURE wyswietl_wszystkie_leki;
   
@@ -16,7 +16,7 @@ PACKAGE PAK_CLIENT_MANAGE AS
   
   PROCEDURE zamow_lek(id_prod IN INT);
   
-  PROCEDURE wyswietl_historie_zakupow;
+  PROCEDURE wyswietl_recepry_klientaa(p_klient_id IN INT);
 
 END PAK_CLIENT_MANAGE;
 
@@ -60,7 +60,69 @@ PACKAGE PAK_CLIENT_MANAGE AS
         
     END czy_produkt_na_stanie;
 
-  PROCEDURE zakup_lekarstwo(id_prod IN INT);
+  PROCEDURE zakup_lekarstwo(
+        id_prod IN INT,
+        id_plat IN INT,
+        ilosc_prod IN NUMBER
+    ) AS
+        ref_pracownik ref type_pracownicy;
+        ref_platnosci ref type_platnosci;
+        ref_produkt ref type_produkty;
+        ref_trans ref type_transakcje;
+        ilosc_na_st NUMBER;
+        trans_id INT;
+    BEGIN
+        --przeprowadz transakcje
+        
+        -- czy produkt jest na stanie magazynowym
+        IF czy_produkt_na_stanie(id_prod) = FALSE THEN
+            raise brak_produktu_na_stanie_except;
+        END IF;
+        
+        -- czy jest wystarczajaca ilosc produktu na stanie magazynowym
+        ilosc_na_st := pak_employee_manage.ilosc_produktu_na_stanie(id_prod);
+        
+        IF ilosc_na_st < ilosc_prod THEN
+            raise brak_wystarczajacej_ilosci_except;
+        END IF;
+        
+        
+        SELECT ref(prac) INTO ref_pracownik FROM tab_pracownicy prac WHERE pracownikID = 8007;
+        
+        SELECT ref(pl) INTO ref_platnosci FROM tab_platnosci pl WHERE platnoscid = id_plat;
+        
+        SELECT ref(prod) INTO ref_produkt FROM tab_produkty prod WHERE produktID = id_prod;
+        
+        trans_id := SEQ_transakcje.NEXTVAL;
+        
+        --wprowadzenie transkacji
+        INSERT INTO tab_transakcje(transakcjaID,dataWykonania,pracownik,platnosc)
+            VALUES(trans_id, TO_DATE(sysdate,'DD-MM-YYYY'), ref_pracownik, ref_platnosci);
+            
+            
+        SELECT REF(tr) INTO ref_trans FROM tab_transakcje tr WHERE transakcjaid = trans_id;
+            
+        -- wprowadzenie szczegolow_transakcji
+        INSERT INTO tab_szczegolytransakcji(transakcja,recepta,produkt,ilosc)
+            VALUES(ref_trans,NULL,ref_produkt,ilosc_prod);
+            
+            
+        --aktualizacja stanu magazynowego
+        
+        pak_employee_manage.zaktualizuj_stan_produktu(id_prod, -ilosc_prod);
+        
+        DBMS_output.put_line('Transakcja przebiegla pomyslnie!');
+        DBMS_output.put_line('Sprzedaz leku o ID: ' || id_prod ||' w ilosci: ' || ilosc_prod);
+        
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_output.put_line('Wprowadzono nie poprawne dane!');
+        WHEN brak_produktu_na_stanie_except THEN
+            DBMS_output.put_line('Brak produktu na stanie magazynowym!');
+        WHEN brak_wystarczajacej_ilosci_except THEN
+            DBMS_output.put_line('Brak wystarczajacej ilosci produktu na stanie magazynowym!');
+    
+    END zakup_lekarstwo;
   
   PROCEDURE wyswietl_wszystkie_leki AS
     Begin
@@ -149,11 +211,30 @@ END;
     EXCEPTION
         WHEN brak_produktu_except THEN
             dbms_output.put_line('Brak produktu o id : ' || id_prod);
-    
-    END;
     END zamow_lek;
   
   
-  PROCEDURE wyswietl_historie_zakupow;
+  PROCEDURE wyswietl_recepry_klienta(
+    p_klient_id IN INT
+) AS
+BEGIN
+    FOR r IN (
+        SELECT r.RECEPTAID, r.DATAWYSTAWIENIA, r.DATAWAZNOSCI, r.KODDOSTEPU,
+               l.IMIE AS IMIE_LEKARZA, l.NAZWISKO AS NAZWISKO_LEKARZA,
+               k.IMIE AS IMIE_KLIENTA, k.NAZWISKO AS NAZWISKO_KLIENTA
+        FROM tab_Recepty r
+        JOIN tab_Lekarze l ON r.lekarz.lekarzID = l.lekarzID
+        JOIN tab_Klienci k ON r.klient.klientID = k.klientID
+        WHERE k.KLIENTID = p_klient_id
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE('ID recepty: ' || r.RECEPTAID);
+        DBMS_OUTPUT.PUT_LINE('Data wystawienia: ' || TO_CHAR(r.DATAWYSTAWIENIA, 'YYYY-MM-DD'));
+        DBMS_OUTPUT.PUT_LINE('Data ważności: ' || TO_CHAR(r.DATAWAZNOSCI, 'YYYY-MM-DD'));
+        DBMS_OUTPUT.PUT_LINE('Kod dostępu: ' || r.KODDOSTEPU);
+        DBMS_OUTPUT.PUT_LINE('Lekarz: ' || r.IMIE_LEKARZA || ' ' || r.NAZWISKO_LEKARZA);
+        DBMS_OUTPUT.PUT_LINE('Klient: ' || r.IMIE_KLIENTA || ' ' || r.NAZWISKO_KLIENTA);
+        DBMS_OUTPUT.PUT_LINE('----------------------------------');
+    END LOOP;
+END wyswietl_recepry_klienta;
 
 END PAK_CLIENT_MANAGE;
