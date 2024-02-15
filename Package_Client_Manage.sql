@@ -1,30 +1,33 @@
-CREATE OR REPLACE 
-PACKAGE PAK_CLIENT_MANAGE AS 
+create or replace NONEDITIONABLE PACKAGE PAK_CLIENT_MANAGE AS 
 
   /* TODO enter package declarations (types, exceptions, methods etc) here */
   brak_kategorii_except EXCEPTION;
+  brak_produktu_na_stanie_except EXCEPTION;
+  brak_wystarczajacej_ilosci_except EXCEPTION;
+  brak_produktu_except EXCEPTION;
 
   FUNCTION czy_istnieje_kategoria(id_kat IN INT) RETURN BOOLEAN;
 
   FUNCTION czy_produkt_na_stanie(id_prod IN INT) RETURN BOOLEAN;
 
   PROCEDURE zakup_lekarstwo(id_prod IN INT,id_plat IN INT, ilosc_prod IN NUMBER);
-  
+
   PROCEDURE wyswietl_wszystkie_leki;
-  
+
   PROCEDURE wyswietl_leki_z_kategorii(id_kat IN INT);
-  
-  PROCEDURE zamow_lek(id_prod IN INT);
-  
-  PROCEDURE wyswietl_recepry_klientaa(p_klient_id IN INT);
+
+  PROCEDURE zamow_lek(id_prod IN INT, ilosc_zam IN NUMBER);
+
+  PROCEDURE wyswietl_recepty_klienta(p_klient_id IN INT);
 
 END PAK_CLIENT_MANAGE;
 
-CREATE OR REPLACE 
-PACKAGE PAK_CLIENT_MANAGE AS 
 
-   FUNCTION czy_istnieje_kategoria(id_kat IN INT) RETURN BOOLEAN IS
-            kategoria INT;
+CREATE OR REPLACE
+PACKAGE BODY PAK_CLIENT_MANAGE AS
+
+    FUNCTION czy_istnieje_kategoria(id_kat IN INT) RETURN BOOLEAN AS
+        kategoria INT;
     BEGIN
         
         SELECT COUNT(*) INTO kategoria FROM tab_kategorie WHERE kategoriaID = id_kat;
@@ -38,11 +41,13 @@ PACKAGE PAK_CLIENT_MANAGE AS
     EXCEPTION
         WHEN brak_kategorii_except THEN
             dbms_output.put_line('Kategoria o id : ' || id_kat || ' nie istnieje');
-            RETURN FALSE;
-        
+        RETURN FALSE;
     END czy_istnieje_kategoria;
-  FUNCTION czy_produkt_na_stanie(id_prod IN INT) RETURN BOOLEAN IS
-            produkt INT;
+
+
+
+    FUNCTION czy_produkt_na_stanie(id_prod IN INT) RETURN BOOLEAN AS
+        produkt INT;
     BEGIN
         
         SELECT COUNT(*) INTO produkt FROM tab_stanmagazynowy stan WHERE stan.produkt.produktID = id_prod;
@@ -56,15 +61,12 @@ PACKAGE PAK_CLIENT_MANAGE AS
     EXCEPTION
         WHEN brak_produktu_na_stanie_except THEN
             dbms_output.put_line('Produktu o id : ' || id_prod || ' nie ma na stanie.');
-            RETURN FALSE;
-        
+        RETURN FALSE;
     END czy_produkt_na_stanie;
 
-  PROCEDURE zakup_lekarstwo(
-        id_prod IN INT,
-        id_plat IN INT,
-        ilosc_prod IN NUMBER
-    ) AS
+
+
+  PROCEDURE zakup_lekarstwo(id_prod IN INT,id_plat IN INT, ilosc_prod IN NUMBER) AS
         ref_pracownik ref type_pracownicy;
         ref_platnosci ref type_platnosci;
         ref_produkt ref type_produkty;
@@ -123,26 +125,36 @@ PACKAGE PAK_CLIENT_MANAGE AS
             DBMS_output.put_line('Brak wystarczajacej ilosci produktu na stanie magazynowym!');
     
     END zakup_lekarstwo;
-  
-  PROCEDURE wyswietl_wszystkie_leki AS
-    Begin
-    FOR lek IN (SELECT * FROM tab_Produkty) LOOP
-        DBMS_OUTPUT.PUT_LINE('Produkt ID: ' || lek.produktID);
-        DBMS_OUTPUT.PUT_LINE('Nazwa Produktu: ' || lek.nazwaProduktu);
-        DBMS_OUTPUT.PUT_LINE('Cena Produktu: ' || lek.cenaProduktu);
-        DBMS_OUTPUT.PUT_LINE('Data Produkcji: ' || TO_CHAR(lek.dataProdukcji, 'YYYY-MM-DD'));
-        DBMS_OUTPUT.PUT_LINE('Data Ważności: ' || TO_CHAR(lek.dataWaznosci, 'YYYY-MM-DD'));
-        DBMS_OUTPUT.PUT_LINE('Dostępność: ' || lek.dostepnosc);
-        DBMS_OUTPUT.PUT_LINE('Opis: ' || lek.opis);
-        IF lek.kategoria IS NOT NULL THEN
-            DBMS_OUTPUT.PUT_LINE('Kategoria: ' || lek.kategoria.nazwaKategorii);
-        END IF;
-    END LOOP;
-END;
 
+
+
+    PROCEDURE wyswietl_wszystkie_leki AS
+        ref_kat type_kategorie;
+    Begin
+        FOR lek IN (SELECT * FROM tab_Produkty) LOOP
+            DBMS_OUTPUT.PUT_LINE('');
+            DBMS_OUTPUT.PUT_LINE('Produkt ID: ' || lek.produktID);
+            DBMS_OUTPUT.PUT_LINE('Nazwa Produktu: ' || lek.nazwaProduktu);
+            DBMS_OUTPUT.PUT_LINE('Cena Produktu: ' || lek.cenaProduktu);
+            DBMS_OUTPUT.PUT_LINE('Data Produkcji: ' || TO_CHAR(lek.dataProdukcji, 'YYYY-MM-DD'));
+            DBMS_OUTPUT.PUT_LINE('Data Ważności: ' || TO_CHAR(lek.dataWaznosci, 'YYYY-MM-DD'));
+            DBMS_OUTPUT.PUT_LINE('Dostępność: ' || lek.dostepnosc);
+            DBMS_OUTPUT.PUT_LINE('Opis: ' || lek.opis);
+            
+            SELECT deref(lek.kategoria) INTO ref_kat FROM tab_produkty WHERE produktId = lek.produktID;
+            
+            IF lek.kategoria IS NOT NULL THEN
+                DBMS_OUTPUT.PUT_LINE('Kategoria: ' || ref_kat.nazwaKategorii);
+            END IF;
+            
+        END LOOP;
+        
+    END wyswietl_wszystkie_leki;
     
-  PROCEDURE wyswietl_leki_z_kategorii(id_kat IN INT) AS
-    kat type_kategorie;
+    
+
+    PROCEDURE wyswietl_leki_z_kategorii(id_kat IN INT) AS
+        kat type_kategorie;
     BEGIN
     
         IF czy_istnieje_kategoria(id_kat) = FALSE THEN
@@ -172,13 +184,13 @@ END;
             dbms_output.put_line('Brak kategorii o id : ' || id_kat);
         
     END wyswietl_leki_z_kategorii;
-            
-  
-  PROCEDURE zamow_lek(id_prod IN INT, ilosc_zam IN NUMBER) AS
+
+    PROCEDURE zamow_lek(id_prod IN INT, ilosc_zam IN NUMBER) AS
     BEGIN
         DECLARE
             ref_produkt ref type_produkty;
             aktualna_data DATE;
+            ref_pracownik ref type_pracownicy;
         BEGIN
             SELECT sysdate INTO aktualna_data FROM dual;
     
@@ -187,9 +199,14 @@ END;
             raise brak_produktu_except;
         end if;
 
+        --referencja dla produktu
         SELECT ref(prod) INTO ref_produkt
         FROM tab_Produkty prod
-        WHERE prod.produktID = id_prod;      
+        WHERE prod.produktID = id_prod;   
+        
+        --referencja dla pracownika - klient
+        SELECT ref(prac) INTO ref_pracownik FROM taB_pracownicy prac WHERE prac.pracownikId = 8007;
+        
     
         INSERT INTO tab_Zamowienia(zamowienieID,
             ilosc,
@@ -203,38 +220,116 @@ END;
         'Oczekujace',
         TO_DATE(aktualna_data,'DD-MM-YYYY'),
         ref_produkt,
-        8007 /*Jako rze klient będzie sam kupował tylko przy kiosku samoobsługowym to ID_pracowanika możemy dać na stałe*/
+        ref_pracownik /*Jako ze klient będzie sam kupował tylko przy kiosku samoobsługowym to ID_pracowanika możemy dać na stałe*/
         );
         
-        dbms_output.put_line('Zamowienie zostalo zlozone poprawnie');
+        
+        dbms_output.put_line('Zamowienie zostalo zlozone poprawnie.');
         
     EXCEPTION
         WHEN brak_produktu_except THEN
             dbms_output.put_line('Brak produktu o id : ' || id_prod);
+        END;
     END zamow_lek;
-  
-  
-  PROCEDURE wyswietl_recepry_klienta(
-    p_klient_id IN INT
-) AS
-BEGIN
-    FOR r IN (
-        SELECT r.RECEPTAID, r.DATAWYSTAWIENIA, r.DATAWAZNOSCI, r.KODDOSTEPU,
-               l.IMIE AS IMIE_LEKARZA, l.NAZWISKO AS NAZWISKO_LEKARZA,
-               k.IMIE AS IMIE_KLIENTA, k.NAZWISKO AS NAZWISKO_KLIENTA
-        FROM tab_Recepty r
-        JOIN tab_Lekarze l ON r.lekarz.lekarzID = l.lekarzID
-        JOIN tab_Klienci k ON r.klient.klientID = k.klientID
-        WHERE k.KLIENTID = p_klient_id
-    ) LOOP
-        DBMS_OUTPUT.PUT_LINE('ID recepty: ' || r.RECEPTAID);
-        DBMS_OUTPUT.PUT_LINE('Data wystawienia: ' || TO_CHAR(r.DATAWYSTAWIENIA, 'YYYY-MM-DD'));
-        DBMS_OUTPUT.PUT_LINE('Data ważności: ' || TO_CHAR(r.DATAWAZNOSCI, 'YYYY-MM-DD'));
-        DBMS_OUTPUT.PUT_LINE('Kod dostępu: ' || r.KODDOSTEPU);
-        DBMS_OUTPUT.PUT_LINE('Lekarz: ' || r.IMIE_LEKARZA || ' ' || r.NAZWISKO_LEKARZA);
-        DBMS_OUTPUT.PUT_LINE('Klient: ' || r.IMIE_KLIENTA || ' ' || r.NAZWISKO_KLIENTA);
-        DBMS_OUTPUT.PUT_LINE('----------------------------------');
-    END LOOP;
-END wyswietl_recepry_klienta;
+    
+    
+
+    PROCEDURE wyswietl_recepty_klienta(p_klient_id IN INT) AS
+    BEGIN
+        FOR r IN (
+            SELECT r.RECEPTAID, r.DATAWYSTAWIENIA, r.DATAWAZNOSCI, r.KODDOSTEPU,
+                   l.IMIE AS IMIE_LEKARZA, l.NAZWISKO AS NAZWISKO_LEKARZA,
+                   k.IMIE AS IMIE_KLIENTA, k.NAZWISKO AS NAZWISKO_KLIENTA
+            FROM tab_Recepty r
+            JOIN tab_Lekarze l ON r.lekarz.lekarzID = l.lekarzID
+            JOIN tab_Klienci k ON r.klient.klientID = k.klientID
+            WHERE k.KLIENTID = p_klient_id
+        ) LOOP
+            DBMS_OUTPUT.PUT_LINE('ID recepty: ' || r.RECEPTAID);
+            DBMS_OUTPUT.PUT_LINE('Data wystawienia: ' || TO_CHAR(r.DATAWYSTAWIENIA, 'YYYY-MM-DD'));
+            DBMS_OUTPUT.PUT_LINE('Data ważności: ' || TO_CHAR(r.DATAWAZNOSCI, 'YYYY-MM-DD'));
+            DBMS_OUTPUT.PUT_LINE('Kod dostępu: ' || r.KODDOSTEPU);
+            DBMS_OUTPUT.PUT_LINE('Lekarz: ' || r.IMIE_LEKARZA || ' ' || r.NAZWISKO_LEKARZA);
+            DBMS_OUTPUT.PUT_LINE('Klient: ' || r.IMIE_KLIENTA || ' ' || r.NAZWISKO_KLIENTA);
+            DBMS_OUTPUT.PUT_LINE('----------------------------------');
+        END LOOP;
+    END wyswietl_recepty_klienta;
 
 END PAK_CLIENT_MANAGE;
+
+
+
+set SERVEROUTPUT on;
+-- PRZYKLADY UZYCIA CLIENT
+
+-- funkcja sprawdzajaca czy istnieje kategoria
+
+DECLARE
+    res BOOLEAN := false;
+BEGIN
+
+    res := pak_client_manage.czy_istnieje_kategoria(10);
+    
+    if res = True THEN
+        dbms_output.put_line('Kategoria istnieje');
+    else
+        dbms_output.put_line('Kategoria nie istnieje');
+    END IF;
+
+END;
+
+-- funkcja sprawdzajaca czy dany produkt znajduje sie na stanie
+
+DECLARE
+    res BOOLEAN := false;
+BEGIN
+
+    res := pak_client_manage.czy_produkt_na_stanie(1);
+    
+    if res = True THEN
+        dbms_output.put_line('Produkt na stanie');
+    else
+        dbms_output.put_line('Brak produktu na stanie');
+    END IF;
+
+END;
+
+
+SELECT * FROM taB_pracownicy;
+-- zakup lekarstwa (poprzez klient o id 8007)
+commit;
+rollback;
+BEGIN
+
+    pak_client_manage.zakup_lekarstwo(
+        id_prod => 1,
+        id_plat => 1,
+        ilosc_prod => 5
+    );
+
+END;
+
+
+-- wyswietlanie wszystkich lekow
+SELECT * FROM taB_produkty;
+BEGIN
+    pak_client_manage.wyswietl_wszystkie_leki;
+END;
+
+
+-- wyswietlanie lekow z danej kategorii
+BEGIN
+    pak_client_manage.wyswietl_leki_z_kategorii(id_kat => 1);
+END;
+
+
+-- zamawianie leku przez klienta
+BEGIN 
+    pak_client_manage.zamow_lek(id_prod => 2, ilosc_zam => 10);
+END;
+
+
+-- wyswietlanie recept klienta
+BEGIN 
+    pak_client_manage.wyswietl_recepty_klienta(p_klient_id => 2);
+END;
